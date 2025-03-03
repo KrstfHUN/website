@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #313131;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .task-title, .product, .random-product, .furniture-list, .statistics, .leo-comments {
+            background-color: #000000;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            color: #fff;
+        }
+        .product img, .random-product img {
+            border-radius: 8px;
+            width: 150px;
+            height: 150px;
+            margin-right: 20px;
+            object-fit: cover;
+        }
+        .product h2, .random-product h2 {
+            margin: 0 0 10px;
+            font-size: 1.5em;
+        }
+        .product p, .random-product p {
+            margin: 5px 0;
+        }
+        .product {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .expand-arrow {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .expand-arrow::before {
+            content: '▼';
+            margin-right: 5px;
+        }
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            margin-left: 30px;
+        }
+        .product-details {
+            display: none;
+            flex-direction: column;
+            margin-top: 10px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .product-details.expanded {
+            display: flex;
+            max-height: 1000px;
+        }
+        .cheapest {
+            color: green;
+            font-weight: bold;
+        }
+        .most-expensive {
+            color: red;
+            font-weight: bold;
+        }
+        ol {
+            padding-left: 20px;
+        }
+        ol li {
+            margin: 5px 0;
+        }
+        .statistics p, .leo-comments ul {
+            margin: 10px 0;
+        }
+        .leo-comments ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .leo-comments ul li {
+            background-color: #bdbbbb;
+            border-radius: 4px;
+            margin: 5px 0;
+            padding: 10px;
+            color: #000000;
+        }
+        .review {
+            background-color: #999797;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            color: #000000;
+        }
+        .review .rating {
+            color: #eeff00;
+        }
+        .review .reviewer {
+            font-size: 0.9em;
+            color: #000000;
+        }
+        .review .reviewer-name {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="task-title">
+            <h2>Task 1: List the first 10 products</h2>
+        </div>
+        <div id="product-list" class="product-list"></div>
+        <div id="random-product" class="random-product">
+            <h2>Task 2: Display a randomly selected product</h2>
+        </div>
+        <div id="furniture-list" class="furniture-list">
+            <h2>Task 3: List products in the 'furniture' category</h2>
+        </div>
+        <div id="statistics" class="statistics">
+            <h2>Task 4: Display statistics</h2>
+        </div>
+        <div id="leo-comments" class="leo-comments">
+            <h2>Task 5: List products commented on by Leo Rivera</h2>
+        </div>
+    </div>
+    <script>
+        const URL = 'https://dummyjson.com/products';
+
+        async function fetchData() {
+            try {
+                const response = await fetch(URL);
+                const data = await response.json();
+                return data.products;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return [];
+            }
+        }
+
+        function getStarRating(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+        function toggleDetails(event) {
+            const productDetails = event.currentTarget.parentElement.querySelector('.product-details');
+            if (productDetails.style.display === 'none' || productDetails.style.display === '') {
+                productDetails.style.display = 'flex';
+                productDetails.classList.add('expanded');
+            } else {
+                productDetails.style.display = 'none';
+                productDetails.classList.remove('expanded');
+            }
+        }
+
+        async function init() {
+            const products = await fetchData();
+            if (products.length === 0) {
+                console.error('No products found');
+                return;
+            }
+
+            // 1. List the first 10 products in a table
+            const productList = document.getElementById('product-list');
+            products.slice(0, 10).forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+
+                const expandArrow = document.createElement('div');
+                expandArrow.className = 'expand-arrow';
+                expandArrow.textContent = 'Expand';
+                expandArrow.addEventListener('click', toggleDetails);
+                productDiv.appendChild(expandArrow);
+
+                const img = document.createElement('img');
+                img.src = product.thumbnail;
+                productDiv.appendChild(img);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'product-info';
+                const title = document.createElement('h2');
+                title.textContent = product.title;
+                infoDiv.appendChild(title);
+
+                const category = document.createElement('p');
+                category.textContent = `Category: ${product.category}`;
+                infoDiv.appendChild(category);
+
+                const productDetails = document.createElement('div');
+                productDetails.className = 'product-details';
+                productDetails.innerHTML = `
+                    <p>Description: ${product.description}</p>
+                    <p>Price: $${product.price}</p>
+                    <p>Discount Percentage: ${product.discountPercentage}%</p>
+                    <p>Rating: ${getStarRating(product.rating)}</p>
+                    <p>Stock: ${product.stock}</p>
+                    <p>Tags: ${product.tags.join(', ')}</p>
+                    <p>Warranty Information: ${product.warrantyInformation || 'N/A'}</p>
+                    <p>Shipping Information: ${product.shippingInformation || 'N/A'}</p>
+                    <p>Availability Status: ${product.availabilityStatus || 'N/A'}</p>
+                    <div class="reviews">
+                        <h3>Reviews:</h3>
+                        ${product.reviews && product.reviews.length > 0 ? product.reviews.map(review => `
+                            <div class="review">
+                                <p class="reviewer"><span class="reviewer-name">${review.reviewerName}</span> (${review.reviewerEmail})</p>
+                                <p class="rating">${getStarRating(review.rating)}</p>
+                                <p>${review.comment}</p>
+                            </div>
+                        `).join('') : '<p>No reviews available</p>'}
+                    </div>
+                `;
+                infoDiv.appendChild(productDetails);
+                productDiv.appendChild(infoDiv);
+                productList.appendChild(productDiv);
+            });
+
+            // 2. Display 5-6 items of a randomly selected product
+            const randomProduct = products[Math.floor(Math.random() * products.length)];
+            const randomProductDiv = document.getElementById('random-product');
+            randomProductDiv.innerHTML = `
+                <h2>Task 2: Display a randomly selected product</h2>
+                <p>Random Product: ${randomProduct.title}</p>
+                <p>Category: ${randomProduct.category}</p>
+                <p>Price: $${randomProduct.price}</p>
+                <p>Description: ${randomProduct.description}</p>
+                <img src="${randomProduct.thumbnail}" alt="${randomProduct.title}">
+            `;
+
+            if (randomProduct.reviews && randomProduct.reviews.length > 0) {
+                randomProduct.reviews.slice(0, 5).forEach(review => {
+                    const reviewDiv = document.createElement('div');
+                    reviewDiv.className = 'review';
+                    reviewDiv.innerHTML = `
+                        <p class="reviewer"><span class="reviewer-name">${review.reviewerName}</span> (${review.reviewerEmail})</p>
+                        <p class="rating">${getStarRating(review.rating)}</p>
+                        <p>${review.comment}</p>
+                    `;
+                    randomProductDiv.appendChild(reviewDiv);
+                });
+            } else {
+                randomProductDiv.innerHTML += '<p>Nincsenek kommentek</p>';
+            }
+
+            // 3. Write the names of the products in the 'furniture' category in a numbered list
+            const furnitureList = document.getElementById('furniture-list');
+            const ol = document.createElement('ol');
+            const furnitureProducts = products.filter(product => product.category === 'furniture');
+            furnitureProducts.forEach(product => {
+                const li = document.createElement('li');
+                li.textContent = product.title;
+                ol.appendChild(li);
+            });
+            furnitureList.appendChild(ol);
+
+            // Highlight the cheapest product in green and the most expensive product in red
+            const cheapestProduct = furnitureProducts.reduce((prev, curr) => prev.price < curr.price ? prev : curr);
+            const mostExpensiveProduct = furnitureProducts.reduce((prev, curr) => prev.price > curr.price ? prev : curr);
+            ol.childNodes.forEach(li => {
+                if (li.textContent === cheapestProduct.title) {
+                    li.classList.add('cheapest');
+                }
+                if (li.textContent === mostExpensiveProduct.title) {
+                    li.classList.add('most-expensive');
+                }
+            });
+
+            // 4. Display statistics
+            const statisticsDiv = document.getElementById('statistics');
+            const totalProducts = products.length;
+            const averagePrice = products.reduce((sum, product) => sum + product.price, 0) / totalProducts;
+            const cheapestProductOverall = products.reduce((prev, curr) => prev.price < curr.price ? prev : curr);
+            const mostExpensiveProductOverall = products.reduce((prev, curr) => prev.price > curr.price ? prev : curr);
+
+            statisticsDiv.innerHTML = `
+                <h2>Task 4: Display statistics</h2>
+                <p>Avarage price of products: $${averagePrice.toFixed(2)}</p>
+                <p>Cheapest product price: $${cheapestProductOverall.price}</p>
+                <p>Most expensive product name: ${mostExpensiveProductOverall.title}</p>
+                <p>Total number of products: ${totalProducts}</p>
+            `;
+
+            // 5. List products commented on by Leo Rivera
+            const leoCommentsDiv = document.getElementById('leo-comments');
+            const leoProducts = products.filter(product => product.reviews && product.reviews.some(review => review.reviewerName.includes('Leo Rivera')));
+            const ul = document.createElement('ul');
+            leoProducts.forEach(product => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${product.title}</strong>`;
+                const reviews = product.reviews.filter(review => review.reviewerName.includes('Leo Rivera'));
+                reviews.forEach(review => {
+                    const reviewDiv = document.createElement('div');
+                    reviewDiv.className = 'review';
+                    reviewDiv.innerHTML = `
+                        <p class="reviewer"><span class="reviewer-name">${review.reviewerName}</span> (${review.reviewerEmail})</p>
+                        <p class="rating">${getStarRating(review.rating)}</p>
+                        <p>${review.comment}</p>
+                    `;
+                    li.appendChild(reviewDiv);
+                });
+                ul.appendChild(li);
+            });
+            leoCommentsDiv.appendChild(ul);
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>
